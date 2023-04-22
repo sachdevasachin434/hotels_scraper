@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import logging
 import tkinter as tk
+import os
+from twilio.rest import Client
+import base64
 
 logging.basicConfig(level=logging.DEBUG, filename="logfile", filemode="a+",
                     format="%(asctime)-15s %(levelname)-8s %(message)s")
@@ -49,33 +52,72 @@ def scrape_hotel_contacts(url):
 def save_results_to_csv(result, csv_name):
     df = pd.DataFrame(result)
     df.drop_duplicates(inplace=True)
+    if not os.path.exists('downloads'):
+        os.makedirs('downloads')
     df.to_csv(f"downloads/{csv_name}.csv", index=False)
     logging.info(f"Results saved to downloads/{csv_name}.csv")
+    return df
+
+def send_message(row):
+    # message = client.messages.create(
+    # from_='whatsapp:+14155238886',
+    # body='Your appointment is coming up on July 21 at 3PM',
+    # to=f'whatsapp:+91{row['Mobile'][0]}'
+    # )
+    print(message.sid)
+
+def send_whatsapp_twilio(df):
+    account_sid = 'id'
+    auth_token = 'token'
+    client = Client(account_sid, auth_token)
+    df.apply(lambda x: send_message(x))
+
+def send_whatsapp_twilio_test():
+    account_sid = 'id'
+    auth_token = 'token'
+    client = Client(account_sid, auth_token)
+    media_data = None
+    with open("C:\\Users\\DELL\\Desktop\\Projects\\hotels\\hotels_scraper\\1a.png", 'rb') as fp:
+        media_data = fp.read()
+    
+    media_base64 = base64.b64encode(media_data).decode('utf-8')  # Convert media file to base64
+    # media_url = f'data:image/jpeg;base64,{media_base64}'  # Build media URL with the base64-encoded data
+    media_url="https://drive.google.com/file/d/1iqwKfVRGAzmRA50mfMheUJ8AvAcO63QM/view?usp=sharing"  # Convert media file to base64 and provide as media_url
+    # print(media_url)
+    message = client.messages.create(
+    from_='whatsapp:+14155238886',
+    media_url=[media_url],
+    body='Your appointment is coming up on July 21 at 3PM',
+    to=f'whatsapp:+91{8168079273}'
+    )
 
 def submit():
     url = entry1.get()
     csv_name = entry2.get()
     result = scrape_hotel_contacts(url)
-    save_results_to_csv(result, csv_name)
+    df = save_results_to_csv(result, csv_name)
+    send_whatsapp_twilio(df)
+    send_whatsapp_twilio_test()
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    root.title("Hotel Scraper")
-    root.geometry("400x300")
+    # root = tk.Tk()
+    # root.title("Hotel Scraper")
+    # root.geometry("400x300")
 
-    label1 = tk.Label(root, text="Provide url")
-    label1.pack(pady=10)
+    # label1 = tk.Label(root, text="Provide url")
+    # label1.pack(pady=10)
 
-    entry1 = tk.Entry(root, width=30)
-    entry1.pack()
+    # entry1 = tk.Entry(root, width=30)
+    # entry1.pack()
 
-    label2 = tk.Label(root, text="Enter output file name")
-    label2.pack(pady=10)
+    # label2 = tk.Label(root, text="Enter output file name")
+    # label2.pack(pady=10)
 
-    entry2 = tk.Entry(root, width=30)
-    entry2.pack()
+    # entry2 = tk.Entry(root, width=30)
+    # entry2.pack()
 
-    button = tk.Button(root, text="Submit", command=submit)
-    button.pack(pady=10)
+    # button = tk.Button(root, text="Submit", command=submit)
+    # button.pack(pady=10)
 
-    root.mainloop()
+    # root.mainloop()
+    send_whatsapp_twilio_test()
